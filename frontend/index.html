@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Posts</title>
+</head>
+<body>
+    <h1>Blog Posts</h1>
+    <div id="blogPosts"></div>
+    <h2>Create a New Blog Post</h2>
+    <form id="createForm">
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name"><br>
+        <label for="image">Image URL:</label><br>
+        <input type="text" id="image" name="image"><br>
+        <label for="video">Video URL:</label><br>
+        <input type="text" id="video" name="video"><br>
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description"></textarea><br>
+        <button type="submit">Create</button>
+    </form>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        // Function to fetch and display blog posts
+        function fetchBlogPosts() {
+            fetch('/blogposts/')
+                .then(response => response.json())
+                .then(data => {
+                    const blogPostsDiv = document.getElementById('blogPosts');
+                    blogPostsDiv.innerHTML = '';
+                    data.forEach(blogPost => {
+                        const blogPostDiv = document.createElement('div');
+                        blogPostDiv.innerHTML = `
+                            <h3>${blogPost.name}</h3>
+                            <p>Description: ${blogPost.description}</p>
+                            <p>Created: ${blogPost.creation_date}</p>
+                            <p>Updated: ${blogPost.updated_date}</p>
+                            <button onclick="deleteBlogPost(${blogPost.id})">Delete</button>
+                        `;
+                        blogPostsDiv.appendChild(blogPostDiv);
+                    });
+                });
+        }
+
+        // Function to create a new blog post
+        function createBlogPost(event) {
+            event.preventDefault();
+            const form = document.getElementById('createForm');
+            const formData = new FormData(form);
+            fetch('http://127.0.0.1:8001/blogposts/create/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                fetchBlogPosts();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Function to delete a blog post
+        function deleteBlogPost(id) {
+            fetch(`/blogposts/${id}/delete/`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log(`Blog post with ID ${id} deleted successfully.`);
+                    fetchBlogPosts();
+                } else {
+                    console.error(`Error deleting blog post with ID ${id}.`);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Fetch blog posts when the page loads
+        window.onload = function() {
+            fetchBlogPosts();
+            const form = document.getElementById('createForm');
+            form.addEventListener('submit', createBlogPost);
+        };
+    </script>
+</body>
+</html>
